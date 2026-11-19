@@ -60,14 +60,28 @@ function planSlide_(slideTree, slide, slideNumber) {
 }
 
 /**
+ * Opens the deck to split: the deck at `deckUrl`, or the open deck when the field is empty.
+ * With a URL, one saved test deployment can split any deck the user can read.
+ */
+function openSourceDeck_(deckUrl) {
+  const deckId = parseDeckId(deckUrl);
+  if (deckId === null) return SlidesApp.getActivePresentation();
+  try {
+    return SlidesApp.openById(deckId);
+  } catch (error) {
+    throw new Error(`GSsplit cannot open the deck at this URL. Make sure that you have access to it. (${error.message})`);
+  }
+}
+
+/**
  * Entry point called from the dialog. Returns links to the results.
  *
- * @param options {keepCopy: boolean}
- * @return {{pdfUrl: string, pageCount: number, copyUrl: (string|undefined)}}
+ * @param options {keepCopy: boolean, deckUrl: string}: an empty deckUrl means the open deck
+ * @return {{deckName: string, pdfUrl: string, pageCount: number, copyUrl: (string|undefined)}}
  */
 function runSplit(options) {
   const keepCopy = Boolean(options && options.keepCopy);
-  const source = SlidesApp.getActivePresentation();
+  const source = openSourceDeck_(options && options.deckUrl);
   const sourceId = source.getId();
 
   const parts = {};
@@ -108,6 +122,7 @@ function runSplit(options) {
       { supportsAllDrives: true, fields: 'id,webViewLink' },
     );
     const result = {
+      deckName: meta.name,
       pdfUrl: pdf.webViewLink,
       pageCount: SlidesApp.openById(targetId).getSlides().length,
     };

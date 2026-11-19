@@ -1,6 +1,6 @@
 {
   "name": "gssplit",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Google Slides Editor add-on that splits slides by their animations and exports a PDF",
   "license": "GPL-3.0-or-later",

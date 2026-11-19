@@ -6,6 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-19
+
+### Added
+
+- "Deck to split" field in the export dialog: paste the URL of any deck that you can open, and
+  GSsplit splits that deck instead of the open one. One saved test deployment is thus enough
+  for all your decks.
+- README section on using GSsplit with more than one deck.
+
 ## [0.1.0] - 2026-11-19
 
 ### Added

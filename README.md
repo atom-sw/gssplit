@@ -99,11 +99,25 @@ Rules for the agent:
 
 ## ▶️ Use
 
-1. In your deck, click **Extensions** > **GSsplit** > **Export split PDF…**.
-2. If you also want the split slides as a deck, select **Also keep the split slides as a new
+A test deployment works in one deck only: its **Test document**. GSsplit is in the
+**Extensions** menu only when you open that deck with **Execute**. From that deck, GSsplit can
+split any deck that you can open.
+
+1. In the Apps Script editor, click **Deploy** > **Test deployments**.
+2. Select your saved test and click **Execute**. The test document opens.
+3. In this deck, click **Extensions** > **GSsplit** > **Export split PDF…**.
+4. If you want to split another deck, paste its URL into **Deck to split**. To split the open
+   deck, leave this field empty.
+5. If you also want the split slides as a deck, select **Also keep the split slides as a new
    deck**.
-3. Click **Export PDF**.
-4. When GSsplit is done, click **Open the PDF**.
+6. Click **Export PDF**.
+7. When GSsplit is done, click **Open the PDF**.
+
+GSsplit saves the PDF in the folder of the deck that it splits.
+
+If you prefer GSsplit in the menu of a different deck, add a test for that deck. Click
+**Create new test** in **Test deployments**, and use the same settings as in steps 9–11 of the
+"Install" section. The editor keeps your saved tests, and all tests use your latest code.
 
 The first time, Google asks you to give GSsplit some permissions. Google also shows a warning,
 because Google did not review your copy of the add-on. GSsplit asks for these permissions:
