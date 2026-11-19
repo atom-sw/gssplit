@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+  <head>
+    <base target="_top" />
+    <style>
+      body { font: 14px/1.4 Arial, sans-serif; margin: 12px; }
+      button { margin-top: 12px; }
+      .error { color: #b3261e; }
+    </style>
+  </head>
+  <body>
+    <p>Create a PDF with one page per animation step. Your deck stays unchanged.</p>
+    <label><input type="checkbox" id="keepCopy" /> Also keep the split slides as a new deck</label>
+    <div><button id="run" onclick="run()">Export PDF</button></div>
+    <p id="status"></p>
+    <script>
+      function link(url, label) {
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.target = '_blank';
+        anchor.textContent = label;
+        return anchor;
+      }
+      function run() {
+        const status = document.getElementById('status');
+        document.getElementById('run').disabled = true;
+        status.className = '';
+        status.textContent = 'Working… this can take a minute for large decks.';
+        google.script.run
+          .withSuccessHandler((result) => {
+            status.textContent = `Done: ${result.pageCount} pages. `;
+            status.appendChild(link(result.pdfUrl, 'Open the PDF'));
+            if (result.copyUrl) {
+              status.appendChild(document.createTextNode(' · '));
+              status.appendChild(link(result.copyUrl, 'Open the split deck'));
+            }
+          })
+          .withFailureHandler((error) => {
+            status.className = 'error';
+            status.textContent = error.message;
+            document.getElementById('run').disabled = false;
+          })
+          .runSplit({ keepCopy: document.getElementById('keepCopy').checked });
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,26 @@
+# BEGIN boff-managed
+/.claude/hooks/_boff_dispatch.py
+/.claude/hooks/mise-install
+/.claude/rules/commit-conventions.md
+/.claude/rules/context-management.md
+/.claude/rules/explore-then-code.md
+/.claude/rules/lint-exceptions.md
+/.claude/rules/match-project-conventions.md
+/.claude/rules/precise-context.md
+/.claude/rules/security-basics.md
+/.claude/rules/vcs-etiquette.md
+/.claude/rules/verify-your-work.md
+/.claude/rules/writing-tests.md
+/.claude/settings.json
+/.claude/skills/doc-check/SKILL.md
+/.config/mise/conf.d/boff-0.toml
+/.config/mise/conf.d/boff-1.toml
+/.mcp.json
+# END boff-managed
+
+# Project
+node_modules/
+# Per-developer binding to an Apps Script project (created by clasp)
+.clasp.json
+# Local test decks, exports, and PDFs from live runs (may hold personal content)
+spike/

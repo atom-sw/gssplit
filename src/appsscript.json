@@ -1,0 +1,18 @@
+{
+  "timeZone": "Etc/UTC",
+  "runtimeVersion": "V8",
+  "exceptionLogging": "STACKDRIVER",
+  "dependencies": {
+    "enabledAdvancedServices": [
+      { "userSymbol": "Drive", "serviceId": "drive", "version": "v3" },
+      { "userSymbol": "Slides", "serviceId": "slides", "version": "v1" }
+    ]
+  },
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/presentations",
+    "https://www.googleapis.com/auth/drive.readonly",
+    "https://www.googleapis.com/auth/drive.file",
+    "https://www.googleapis.com/auth/script.external_request",
+    "https://www.googleapis.com/auth/script.container.ui"
+  ]
+}
