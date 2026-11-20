@@ -76,6 +76,30 @@ function readParagraphs_(shape) {
 }
 
 /**
+ * Returns a slide's speaker notes as plain text (see formatNote), or '' when it has none. The
+ * notes shape can be missing in rare cases, as the Slides API documentation warns.
+ */
+function readSpeakerNotes_(slide) {
+  const shape = slide.getNotesPage().getSpeakerNotesShape();
+  if (!shape) return '';
+  return formatNote(
+    shape
+      .getText()
+      .getParagraphs()
+      .map((paragraph) => {
+        const range = paragraph.getRange();
+        const listStyle = range.getListStyle();
+        const inList = listStyle.isInList();
+        return {
+          text: range.asString().replace(/\n$/, ''),
+          glyph: inList ? listStyle.getGlyph() : null,
+          nestingLevel: inList ? listStyle.getNestingLevel() : 0,
+        };
+      }),
+  );
+}
+
+/**
  * Removes the hidden elements of one page from a slide, and queues the Slides API requests
  * that blank its hidden paragraphs.
  */
@@ -107,15 +131,22 @@ function applyPage_(slide, page, indexBySpid, paragraphsBySpid, requests) {
  * @param targetId ID of the new, app-created deck to fill
  * @param sourceSlides the slides of the original deck, which are only read
  * @param plans one plan per source slide, in deck order: {pages, indexBySpid}
+ * @param withNotes whether to read each slide's speaker notes
+ * @return one entry per page of the new deck, in order: {slide, note} for buildPdfpc. `slide` is
+ *     the original slide number; the note is '' unless `withNotes` is set.
  */
-function splitDeck_(targetId, sourceSlides, plans) {
+function splitDeck_(targetId, sourceSlides, plans, withNotes) {
+  // Read every note before the first write, so no read waits on pending edits.
+  const notes = sourceSlides.map((slide) => (withNotes ? readSpeakerNotes_(slide) : ''));
   const deck = SlidesApp.openById(targetId);
   const blankSlides = deck.getSlides();
   const requests = [];
+  const outputPages = [];
 
   sourceSlides.forEach((sourceSlide, slideIndex) => {
     if (sourceSlide.isSkipped()) return;
     const { pages, indexBySpid } = plans[slideIndex];
+    pages.forEach(() => outputPages.push({ slide: slideIndex + 1, note: notes[slideIndex] }));
     const slide = deck.appendSlide(sourceSlide);
     freezeSlideNumbers_(slide, displayedSlideNumber_(sourceSlide));
     if (pages.length === 1 && isFullPage(pages[0])) return;
@@ -146,4 +177,5 @@ function splitDeck_(targetId, sourceSlides, plans) {
   blankSlides.forEach((slide) => slide.remove());
   deck.saveAndClose();
   if (requests.length > 0) Slides.Presentations.batchUpdate({ requests }, targetId);
+  return outputPages;
 }

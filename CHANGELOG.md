@@ -6,6 +6,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-20
+
+### Added
+
+- "Export speaker notes for presenter tools" option: GSsplit saves the speaker notes as a
+  `.pdfpc` file next to the PDF. pdfpc (4.5 and later) and BeamerPresenter show the notes on
+  every step page of a slide, and pdfpc counts the original slides instead of the PDF pages.
+- `tools/gssplit-notes.js`: a local command that puts the notes of the `.pdfpc` file into the
+  PDF, as hidden notes that pympress and pdfpc read, and gives all pages of a slide the same page
+  label. Run it without a clone:
+  `npx --yes --package=github:atom-sw/gssplit gssplit-notes "talk (split).pdf"`.
+
 ## [0.2.0] - 2026-11-19
 
 ### Added

@@ -6,6 +6,7 @@
 
 const EXPORT_BASE_URL = 'https://docs.google.com/presentation/d/';
 const PDF_MIME_TYPE = 'application/pdf';
+const PDFPC_MIME_TYPE = 'application/json';
 
 /** Converts an XmlService element into the plain tree that PptxTiming.js reads. */
 function xmlTree_(element) {
@@ -76,11 +77,14 @@ function openSourceDeck_(deckUrl) {
 /**
  * Entry point called from the dialog. Returns links to the results.
  *
- * @param options {keepCopy: boolean, deckUrl: string}: an empty deckUrl means the open deck
- * @return {{deckName: string, pdfUrl: string, pageCount: number, copyUrl: (string|undefined)}}
+ * @param options {keepCopy: boolean, exportNotes: boolean, deckUrl: string}: an empty deckUrl
+ *     means the open deck
+ * @return {{deckName: string, pdfUrl: string, pageCount: number, copyUrl: (string|undefined),
+ *     notesUrl: (string|undefined)}}
  */
 function runSplit(options) {
   const keepCopy = Boolean(options && options.keepCopy);
+  const exportNotes = Boolean(options && options.exportNotes);
   const source = openSourceDeck_(options && options.deckUrl);
   const sourceId = source.getId();
 
@@ -115,7 +119,7 @@ function runSplit(options) {
   });
   const targetId = target.presentationId;
   try {
-    splitDeck_(targetId, slides, plans);
+    const outputPages = splitDeck_(targetId, slides, plans, exportNotes);
     const pdf = Drive.Files.create(
       { name: `${name}.pdf`, parents: meta.parents, mimeType: PDF_MIME_TYPE },
       fetchExport_(targetId, 'pdf'),
@@ -124,8 +128,17 @@ function runSplit(options) {
     const result = {
       deckName: meta.name,
       pdfUrl: pdf.webViewLink,
-      pageCount: SlidesApp.openById(targetId).getSlides().length,
+      pageCount: outputPages.length,
     };
+    if (exportNotes) {
+      // Same base name as the PDF: pdfpc and BeamerPresenter look for <name>.pdfpc next to it.
+      const notes = Drive.Files.create(
+        { name: `${name}.pdfpc`, parents: meta.parents, mimeType: PDFPC_MIME_TYPE },
+        Utilities.newBlob(JSON.stringify(buildPdfpc(outputPages), null, 2), PDFPC_MIME_TYPE),
+        { supportsAllDrives: true, fields: 'id,webViewLink' },
+      );
+      result.notesUrl = notes.webViewLink;
+    }
     if (keepCopy) {
       result.copyUrl = `${EXPORT_BASE_URL}${targetId}/edit`;
       moveNextTo_(targetId, meta.parents);

@@ -18,6 +18,8 @@ for PowerPoint.
 - It keeps the number of the original slide on each page that it makes from that slide.
 - It saves the PDF in the folder of your deck, as `<deck name> (split).pdf`.
 - If you select the option, it also keeps the split slides as a new deck.
+- If you select the option, it also exports your speaker notes for presenter tools such as
+  `pdfpc`.
 
 GSsplit never changes your deck. It reads your deck and writes new files only.
 
@@ -108,12 +110,14 @@ split any deck that you can open.
 3. In this deck, click **Extensions** > **GSsplit** > **Export split PDF…**.
 4. If you want to split another deck, paste its URL into **Deck to split**. To split the open
    deck, leave this field empty.
-5. If you also want the split slides as a deck, select **Also keep the split slides as a new
-   deck**.
-6. Click **Export PDF**.
-7. When GSsplit is done, click **Open the PDF**.
+5. If you also want the split slides as a deck, select **Keep the split slides as a new deck**.
+6. If you want the speaker notes for a presenter tool, select **Export speaker notes for
+   presenter tools (`.pdfpc`)**.
+7. Click **Export PDF**.
+8. When GSsplit is done, click **Open the PDF**.
 
-GSsplit saves the PDF in the folder of the deck that it splits.
+GSsplit saves the PDF in the folder of the deck that it splits. If you selected the notes, it
+saves the notes file in the same folder.
 
 If you prefer GSsplit in the menu of a different deck, add a test for that deck. Click
 **Create new test** in **Test deployments**, and use the same settings as in steps 9–11 of the
@@ -126,11 +130,69 @@ because Google did not review your copy of the add-on. GSsplit asks for these pe
 |---|---|
 | Google Slides presentations | It reads your deck and edits the new deck. |
 | See and download your Google Drive files | It exports your deck to .pptx. It never changes these files. |
-| Only the Drive files that GSsplit uses | It saves the PDF and moves the new deck to the trash. |
+| Only the Drive files that GSsplit uses | It saves the PDF and the notes file, and moves the new deck to the trash. |
 | Connect to an external service | It downloads the .pptx and PDF exports from Google. |
 | Show content in prompts and sidebars | It shows the export dialog. |
 
 To remove these permissions, open https://myaccount.google.com/permissions.
+
+### 🗒️ Speaker notes
+
+GSsplit can export the speaker notes of your deck as a `.pdfpc` file. The presenter tools
+[`pdfpc`](https://pdfpc.github.io/) (version 4.5 or later) and
+[BeamerPresenter](https://github.com/stiglers-eponym/BeamerPresenter) read this file. They show
+the notes of each slide in the presenter view, on all pages that GSsplit makes from that slide.
+The file also tells `pdfpc` which pages belong to the same slide. As a result, the slide counter of
+`pdfpc` shows the number of your original slides. BeamerPresenter counts the PDF pages.
+
+To present with the notes:
+
+1. Download the PDF and the `.pdfpc` file from Google Drive into the same folder.
+2. Make sure that the two files have the same name before the extension, for example
+   `talk (split).pdf` and `talk (split).pdfpc`.
+3. Run `pdfpc "talk (split).pdf"`.
+
+The `.pdfpc` file contains the notes as plain text, without formatting.
+
+`pdfpc` shows the pages of one slide as an overlay group, like the steps of a LaTeX Beamer slide.
+Below the main view, it shows small previews of the previous and next step. The option `-g` of
+`pdfpc` does not change this, because the `.pdfpc` file sets the groups. If you want the "next
+slide" view to show the first step of the next slide, set `next-slide-first-overlay` in the
+`pdfpc` configuration file.
+
+#### Notes inside the PDF, for `pympress`
+
+The presenter tool [`pympress`](https://github.com/Cimbali/pympress) does not read `.pdfpc`
+files. It only reads notes that are inside the PDF. The command `gssplit-notes` of this
+repository puts the notes of the `.pdfpc` file into the PDF. You need Node.js 22 or later and
+git. You do not need to download or install this repository.
+
+1. Download the PDF and the `.pdfpc` file into the same folder, as for `pdfpc`.
+2. In that folder, run this command. Use the name of your PDF:
+
+   ```sh
+   npx --yes --package=github:atom-sw/gssplit gssplit-notes "talk (split).pdf"
+   ```
+
+   The first time, `npx` downloads the command and its library into its cache. This takes a
+   few seconds.
+3. Run `pympress "talk (split).pdf"`.
+4. If you do not see the notes, press `a` in the presenter window. This key shows the
+   **Annotations** panel. `pympress` remembers this setting.
+
+The command changes the PDF and the `.pdfpc` file:
+
+- Each page of the PDF gets the notes of its slide, as a hidden note. The slides look the same.
+- All pages of one slide get the same page label. As a result, `pympress`, `pdfpc`, and
+  BeamerPresenter show the pages of one slide as one group.
+- The `.pdfpc` file gets the same labels, so `pdfpc` keeps the correct notes on each page.
+
+If you have a copy of this repository, you can also run the command from it. Run `npm install`
+one time, then run `node tools/gssplit-notes.js "talk (split).pdf"`.
+
+If you run the command again on the same files, it replaces the notes. It does not add them two
+times. The page labels count the slides of the PDF in order. If you skipped slides in Google
+Slides, the labels can be different from the slide numbers on the pages.
 
 ## 🔄 Update
 
