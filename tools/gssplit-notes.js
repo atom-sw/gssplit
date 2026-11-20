@@ -3,9 +3,11 @@
  * Weaves the speaker notes of a GSsplit `.pdfpc` file into its PDF, for pympress.
  *
  * Usage, from a clone of the repository (after `npm install`):
- *   node tools/gssplit-notes.js "talk (split).pdf"
+ *   node tools/gssplit-notes.js [--wrap N] "talk (split).pdf"
  * or without a clone, with npx fetching the repository and pdf-lib into its cache:
- *   npx --yes --package=github:atom-sw/gssplit gssplit-notes "talk (split).pdf"
+ *   npx --yes --package=github:atom-sw/gssplit gssplit-notes [--wrap N] "talk (split).pdf"
+ *
+ * --wrap N breaks note lines to fit N characters, because pdfpc and pympress do not wrap them.
  *
  * Reads "talk (split).pdfpc" next to the PDF, then replaces both files: the PDF gets a hidden
  * note annotation on every page with a note, and page labels that group the steps of each
@@ -14,7 +16,11 @@
 const fs = require('fs');
 const path = require('path');
 const { PDFDocument, PDFName, PDFHexString, PDFNumber, PDFString, PDFDict, PDFArray, PDFRef } = require('pdf-lib');
-const { slideNumbers, labelRanges, weavePdfpc, checkPdfpc } = require('./weave.js');
+const { slideNumbers, labelRanges, weavePdfpc, checkPdfpc, wrapNote } = require('./weave.js');
+
+const USAGE = 'Usage: gssplit-notes [--wrap N] "<deck> (split).pdf"';
+// Narrower notes would break most words onto lines of their own.
+const MIN_WRAP = 20;
 
 // Marks the annotations this tool writes (/NM), so that a second run can remove them.
 const NOTE_NAME = 'gssplit-note';
@@ -63,11 +69,31 @@ function replaceFile(file, data) {
   fs.renameSync(temporary, file);
 }
 
-async function main(args) {
-  if (args.length !== 1 || !args[0].toLowerCase().endsWith('.pdf')) {
-    throw new Error('Usage: gssplit-notes "<deck> (split).pdf"');
+/** Returns {pdfFile, wrap} from the command line; `wrap` is null without --wrap. */
+function parseArgs(args) {
+  let wrap = null;
+  const files = [];
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    const inline = /^--wrap=(.*)$/.exec(arg);
+    if (arg === '--wrap' || inline) {
+      const value = inline ? inline[1] : args[(index += 1)];
+      if (!/^\d+$/.test(value || '') || Number(value) < MIN_WRAP) {
+        throw new Error(`--wrap needs a number of characters, ${MIN_WRAP} or more. ${USAGE}`);
+      }
+      wrap = Number(value);
+    } else if (arg.startsWith('-')) {
+      throw new Error(`Unknown option ${arg}. ${USAGE}`);
+    } else {
+      files.push(arg);
+    }
   }
-  const pdfFile = args[0];
+  if (files.length !== 1 || !files[0].toLowerCase().endsWith('.pdf')) throw new Error(USAGE);
+  return { pdfFile: files[0], wrap };
+}
+
+async function main(args) {
+  const { pdfFile, wrap } = parseArgs(args);
   const pdfpcFile = `${pdfFile.slice(0, -'.pdf'.length)}.pdfpc`;
   if (!fs.existsSync(pdfpcFile)) {
     throw new Error(`${path.basename(pdfpcFile)} is missing: export the deck with speaker notes, and put both files in one folder`);
@@ -76,6 +102,12 @@ async function main(args) {
   const pdfpc = JSON.parse(fs.readFileSync(pdfpcFile, 'utf8'));
   const doc = await PDFDocument.load(fs.readFileSync(pdfFile), { updateMetadata: false });
   checkPdfpc(pdfpc, doc.getPageCount());
+  if (wrap !== null) {
+    // Wrap in the .pdfpc too, so pdfpc shows the same lines as pympress.
+    pdfpc.pages.forEach((page) => {
+      if (page.note) page.note = wrapNote(page.note, wrap);
+    });
+  }
   const slides = slideNumbers(pdfpc);
 
   const nums = [];

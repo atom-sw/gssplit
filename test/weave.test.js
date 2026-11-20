@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { buildPdfpc } = require('../src/Pdfpc.js');
-const { slideNumbers, labelRanges, weavePdfpc, checkPdfpc } = require('../tools/weave.js');
+const { slideNumbers, labelRanges, weavePdfpc, checkPdfpc, wrapNote } = require('../tools/weave.js');
 const { loadLikePdfpc } = require('./helpers/pdfpc.js');
 
 // Pages per kept slide of the exported test deck (slide 7 is skipped), and its notes.
@@ -92,4 +92,57 @@ test('checkPdfpc rejects files that do not fit the PDF', async (t) => {
   await t.test('accepts the matching export', () => {
     assert.doesNotThrow(() => checkPdfpc(exported, pageCount));
   });
+});
+
+test('wrapNote breaks long lines at spaces to fit the width', async (t) => {
+  const WIDTH = 20;
+  const cases = [
+    { label: 'a short line stays', note: 'Fits in one line', expected: 'Fits in one line' },
+    {
+      label: 'a long line breaks at spaces',
+      note: 'For now, we are using the pdfpc format',
+      expected: 'For now, we are\nusing the pdfpc\nformat',
+    },
+    { label: 'empty lines stay', note: 'First\n\nSecond', expected: 'First\n\nSecond' },
+    {
+      label: 'a list item continues under its text',
+      note: '- For now, we are using the pdfpc format',
+      expected: '- For now, we are\n  using the pdfpc\n  format',
+    },
+    {
+      label: 'a numbered nested item keeps its indentation',
+      note: '  12. Explain the first step in detail',
+      expected: '  12. Explain the\n      first step in\n      detail',
+    },
+    {
+      label: 'an indented plain line keeps its indentation',
+      note: '    Indented text that is long',
+      expected: '    Indented text\n    that is long',
+    },
+    {
+      label: 'a word longer than the width stays whole',
+      note: 'See https://example.com/a/very/long/path now',
+      expected: 'See\nhttps://example.com/a/very/long/path\nnow',
+    },
+    {
+      label: 'a dash inside a sentence is not a list',
+      note: 'Note - this is a long sentence',
+      expected: 'Note - this is a\nlong sentence',
+    },
+  ];
+  for (const { label, note, expected } of cases) {
+    await t.test(label, () => {
+      assert.equal(wrapNote(note, WIDTH), expected);
+    });
+  }
+});
+
+test('wrapNote is stable: wrapping twice with the same width changes nothing', () => {
+  const WIDTH = 24;
+  const note = 'GSsplit can export notes too:\n- For now, we are using the .pdfpc format\n- But we might be able to embed them in PDFs too in the future\n\nWhat happens with a larger font size?';
+
+  const once = wrapNote(note, WIDTH);
+
+  assert.equal(wrapNote(once, WIDTH), once);
+  assert.ok(once.split('\n').every((line) => line.length <= WIDTH));
 });

@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-20
+
+### Added
+
+- `--wrap N` option of `gssplit-notes`: breaks the lines of the notes to fit N characters, in the
+  PDF and in the `.pdfpc` file, because pdfpc and pympress show long lines with a horizontal
+  scroll bar instead of wrapping them.
+
 ## [0.3.0] - 2026-11-20
 
 ### Added

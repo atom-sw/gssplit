@@ -77,4 +77,43 @@ function checkPdfpc(pdfpc, pageCount) {
   });
 }
 
-module.exports = { slideNumbers, labelRanges, weavePdfpc, checkPdfpc };
+// A list item as formatNote writes it: indentation, a glyph (●, ○, ■, -, 1., a.), one space.
+const LIST_ITEM_PATTERN = /^(\s*)(\S{1,4}) (?=\S)/;
+const LIST_GLYPHS = /^(?:[●○■◆◇►▪•–\-*]|\d{1,3}[.)]|[a-z][.)])$/;
+
+/**
+ * Returns a note with its lines broken at spaces to fit `width` characters, because neither
+ * pdfpc nor pympress wraps notes: long lines get a horizontal scroll bar instead.
+ *
+ * Empty lines and leading indentation stay. A list item continues under its text, not under
+ * its glyph. A word longer than `width` gets a line of its own and is never split. Wrapping an
+ * already wrapped note with the same width changes nothing.
+ */
+function wrapNote(note, width) {
+  return note
+    .split('\n')
+    .flatMap((line) => {
+      if (line.length <= width) return [line];
+      const item = LIST_ITEM_PATTERN.exec(line);
+      const isItem = item && LIST_GLYPHS.test(item[2]);
+      const head = isItem ? item[0] : /^\s*/.exec(line)[0];
+      const hanging = ' '.repeat(head.length);
+      const words = line.slice(head.length).split(/ +/).filter((word) => word !== '');
+      const lines = [];
+      let current = head;
+      words.forEach((word) => {
+        const prefix = lines.length === 0 ? head : hanging;
+        if (current.length > prefix.length && current.length + 1 + word.length > width) {
+          lines.push(current);
+          current = hanging + word;
+        } else {
+          current += (current.length > prefix.length ? ' ' : '') + word;
+        }
+      });
+      lines.push(current);
+      return lines;
+    })
+    .join('\n');
+}
+
+module.exports = { slideNumbers, labelRanges, weavePdfpc, checkPdfpc, wrapNote };

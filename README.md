@@ -187,6 +187,18 @@ The command changes the PDF and the `.pdfpc` file:
   BeamerPresenter show the pages of one slide as one group.
 - The `.pdfpc` file gets the same labels, so `pdfpc` keeps the correct notes on each page.
 
+`pdfpc` and `pympress` do not wrap long lines of notes. They show a horizontal scroll bar
+instead. To break the lines of the notes yourself, add the option `--wrap` with the maximum
+number of characters per line:
+
+```sh
+npx --yes --package=github:atom-sw/gssplit gssplit-notes --wrap 50 "talk (split).pdf"
+```
+
+The option breaks lines at spaces, in the PDF and in the `.pdfpc` file. The lines of a list item
+start under the text of the item. To use a different width later, export the deck again from
+GSsplit, because the command cannot join lines that it broke.
+
 If you have a copy of this repository, you can also run the command from it. Run `npm install`
 one time, then run `node tools/gssplit-notes.js "talk (split).pdf"`.
 
